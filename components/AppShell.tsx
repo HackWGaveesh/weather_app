@@ -16,6 +16,7 @@ import type {
 import { describeWeather } from "@/lib/wmo";
 import { useTempUnit } from "@/hooks/useTempUnit";
 import { Dashboard } from "./Dashboard";
+import { GeolocateButton } from "./GeolocateButton";
 import { LayerControls } from "./LayerControls";
 import { SearchField } from "./SearchField";
 import { UnitToggle } from "./UnitToggle";
@@ -167,8 +168,9 @@ export function AppShell({
       <div className="pointer-events-none absolute inset-0 z-20 flex flex-col lg:flex-row">
         {/* Controls */}
         <div className="pointer-events-none flex flex-1 flex-col justify-between p-3 sm:p-4">
-          <div className="pointer-events-auto flex w-full max-w-[520px] items-start gap-2">
+          <div className="pointer-events-auto flex w-full max-w-[560px] items-start gap-2">
             <SearchField onSelect={pickPlace} />
+            <GeolocateButton onLocate={pickCoords} />
             <UnitToggle unit={tempUnit} onChange={setTempUnit} />
           </div>
 
