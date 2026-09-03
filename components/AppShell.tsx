@@ -58,6 +58,9 @@ export function AppShell({
     radar: false,
   });
   const [scrubIndex, setScrubIndex] = useState<number | null>(null);
+  const [fix, setFix] = useState<{ lat: number; lon: number; accuracyM: number } | null>(
+    null,
+  );
   const [playing, setPlaying] = useState(true);
   const speedUnit: SpeedUnit = tempUnit === "C" ? "kmh" : "mph";
 
@@ -125,10 +128,18 @@ export function AppShell({
   }, [playing, layers.radar, radarFrames.length]);
 
   const pickCoords = useCallback((lat: number, lon: number) => {
+    setFix(null);
     setSelection({ lat, lon: normalizeLon(lon) });
   }, []);
 
+  const locateMe = useCallback((lat: number, lon: number, accuracyM: number) => {
+    const normalised = normalizeLon(lon);
+    setFix({ lat, lon: normalised, accuracyM });
+    setSelection({ lat, lon: normalised });
+  }, []);
+
   const pickPlace = useCallback((place: PlaceRef) => {
+    setFix(null);
     setSelection({
       lat: place.lat,
       lon: place.lon,
@@ -162,6 +173,7 @@ export function AppShell({
           layers={layers}
           radarFrames={radarFrames}
           frameIndex={frameIndex}
+          fix={fix}
         />
       </div>
 
@@ -170,7 +182,7 @@ export function AppShell({
         <div className="pointer-events-none flex flex-1 flex-col justify-between p-3 sm:p-4">
           <div className="pointer-events-auto flex w-full max-w-[560px] items-start gap-2">
             <SearchField onSelect={pickPlace} />
-            <GeolocateButton onLocate={pickCoords} />
+            <GeolocateButton onLocate={locateMe} />
             <UnitToggle unit={tempUnit} onChange={setTempUnit} />
           </div>
 
@@ -214,6 +226,7 @@ export function AppShell({
             onRetry={() => mutate()}
             tempUnit={tempUnit}
             speedUnit={speedUnit}
+            fix={fix}
           />
 
           <div className="mt-6 lg:hidden">

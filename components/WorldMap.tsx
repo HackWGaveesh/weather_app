@@ -6,7 +6,7 @@ import {
   NavigationControl,
   type MapMouseEvent,
 } from "maplibre-gl";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { PlaceRef, RadarFrame } from "@/lib/types";
 import {
@@ -32,17 +32,23 @@ export default function WorldMap({
   layers,
   radarFrames,
   frameIndex,
+  fix,
 }: {
   selected: PlaceRef;
   onPick: (lat: number, lon: number) => void;
   layers: MapLayerState;
   radarFrames: RadarFrame[];
   frameIndex: number;
+  fix: { lat: number; lon: number; accuracyM: number } | null;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
+  const haloRef = useRef<Marker | null>(null);
   const onPickRef = useRef(onPick);
+  // Effects that touch the map bail out until it exists; this re-runs them once
+  // it does, so an early click still lands.
+  const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
     onPickRef.current = onPick;
@@ -78,12 +84,14 @@ export default function WorldMap({
       .setLngLat([selected.lon, selected.lat])
       .addTo(map);
 
+    map.on("load", () => setMapReady(true));
     map.on("click", (e: MapMouseEvent) => onPickRef.current(e.lngLat.lat, e.lngLat.lng));
     map.getCanvas().style.cursor = "crosshair";
 
     return () => {
       map.remove();
       mapRef.current = null;
+      setMapReady(false);
     };
     // Mount-only; prop changes are handled by the effects below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -92,16 +100,82 @@ export default function WorldMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    markerRef.current?.setLngLat([selected.lon, selected.lat]);
-
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const isFix =
+      fix !== null &&
+      Math.abs(fix.lat - selected.lat) < 0.02 &&
+      Math.abs(fix.lon - selected.lon) < 0.02;
+
+    // Weather is fetched on a rounded coordinate for cache reuse, but a located
+    // fix must be drawn where the device actually is, not on that rounded point.
+    markerRef.current?.setLngLat(
+      isFix ? [fix.lon, fix.lat] : [selected.lon, selected.lat],
+    );
+
+    // A located fix frames its own accuracy radius rather than using a generic
+    // zoom, so a precise fix lands on the street and a coarse one visibly doesn't.
+    if (isFix) {
+      const radiusM = Math.max(fix.accuracyM, 150);
+      const dLat = radiusM / 111_320;
+      const dLon =
+        radiusM / (111_320 * Math.max(Math.cos((fix.lat * Math.PI) / 180), 1e-6));
+      map.fitBounds(
+        [
+          [fix.lon - dLon, fix.lat - dLat],
+          [fix.lon + dLon, fix.lat + dLat],
+        ],
+        { padding: 90, maxZoom: 15, duration: reduced ? 0 : 1800, essential: true },
+      );
+      return;
+    }
+
     const target = {
       center: [selected.lon, selected.lat] as [number, number],
-      zoom: Math.max(map.getZoom(), 5),
+      zoom: Math.max(map.getZoom(), 8),
     };
     if (reduced) map.jumpTo(target);
     else map.flyTo({ ...target, duration: 2000, curve: 1.42, essential: true });
-  }, [selected.lat, selected.lon]);
+  }, [selected.lat, selected.lon, fix, mapReady]);
+
+  // Accuracy halo around a located fix, drawn as a DOM marker rather than a
+  // GeoJSON layer so it never depends on the worker tile pipeline. The marker is
+  // recreated on every run: a remounted map leaves any previous one bound to a
+  // dead instance, where it silently stops rendering.
+  useEffect(() => {
+    const map = mapRef.current;
+    haloRef.current?.remove();
+    haloRef.current = null;
+    if (!map || !fix) return;
+
+    const el = document.createElement("div");
+    el.style.borderRadius = "9999px";
+    el.style.border = "1.5px solid rgba(125,211,252,0.85)";
+    el.style.background = "rgba(56,189,248,0.16)";
+    el.style.pointerEvents = "none";
+
+    const marker = new Marker({ element: el }).setLngLat([fix.lon, fix.lat]).addTo(map);
+    haloRef.current = marker;
+
+    const resize = () => {
+      const metersPerPixel =
+        (156543.03392 * Math.cos((fix.lat * Math.PI) / 180)) / 2 ** map.getZoom();
+      const diameter = (2 * fix.accuracyM) / metersPerPixel;
+      // Below a few pixels the halo just fights the marker dot for space.
+      el.style.width = `${diameter}px`;
+      el.style.height = `${diameter}px`;
+      el.style.display = diameter >= 12 ? "block" : "none";
+    };
+
+    resize();
+    map.on("zoom", resize);
+    map.on("move", resize);
+    return () => {
+      map.off("zoom", resize);
+      map.off("move", resize);
+      marker.remove();
+      if (haloRef.current === marker) haloRef.current = null;
+    };
+  }, [fix, mapReady]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -169,7 +243,7 @@ export default function WorldMap({
 
     if (map.isStyleLoaded()) apply();
     else map.once("idle", apply);
-  }, [layers, radarFrames, frameIndex]);
+  }, [layers, radarFrames, frameIndex, mapReady]);
 
   return (
     // Sized explicitly rather than with inset-0: maplibre-gl.css sets

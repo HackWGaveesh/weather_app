@@ -25,6 +25,7 @@ export function Dashboard({
   onRetry,
   tempUnit,
   speedUnit,
+  fix,
 }: {
   bundle: WeatherBundle | undefined;
   loading: boolean;
@@ -32,6 +33,7 @@ export function Dashboard({
   onRetry: () => void;
   tempUnit: TempUnit;
   speedUnit: SpeedUnit;
+  fix: { lat: number; lon: number; accuracyM: number } | null;
 }) {
   if (error && !bundle) {
     return (
@@ -57,7 +59,7 @@ export function Dashboard({
       className="space-y-6 transition-opacity duration-300"
       style={{ opacity: loading ? 0.45 : 1 }}
     >
-      <CurrentHero bundle={bundle} unit={tempUnit} />
+      <CurrentHero bundle={bundle} unit={tempUnit} fix={fix} />
       {error && (
         <p className="text-[12px] text-[var(--text-faint)]">
           Showing the last reading. {error}

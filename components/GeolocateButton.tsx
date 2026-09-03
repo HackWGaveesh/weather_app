@@ -9,7 +9,7 @@ type Status = "idle" | "locating" | "error";
 export function GeolocateButton({
   onLocate,
 }: {
-  onLocate: (lat: number, lon: number) => void;
+  onLocate: (lat: number, lon: number, accuracyM: number) => void;
 }) {
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState<string | null>(null);
@@ -27,17 +27,26 @@ export function GeolocateButton({
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setStatus("idle");
-        onLocate(position.coords.latitude, position.coords.longitude);
+        onLocate(
+          position.coords.latitude,
+          position.coords.longitude,
+          position.coords.accuracy,
+        );
       },
       (error) => {
         setStatus("error");
         setMessage(
           error.code === error.PERMISSION_DENIED
             ? "Location access is blocked. Allow it in your browser’s site settings, or search for a city."
-            : "Couldn’t get a location fix. Try again, or search for a city.",
+            : error.code === error.TIMEOUT
+              ? "Locating timed out. On a desktop this can take a moment — try again."
+              : "Couldn’t get a location fix. Try again, or search for a city.",
         );
       },
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 300_000 },
+      // Ask for the real fix, never a cached one: this button's whole job is
+      // "where am I right now". Coarse mode resolves to the network provider's
+      // location, which can be a different city entirely.
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
     );
   };
 

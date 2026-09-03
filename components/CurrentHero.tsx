@@ -1,7 +1,7 @@
 "use client";
 
 import type { TempUnit, WeatherBundle } from "@/lib/types";
-import { formatCoords } from "@/lib/geo";
+import { formatAccuracy, formatCoords } from "@/lib/geo";
 import { tempValue, timeLabel } from "@/lib/units";
 import { describeWeather } from "@/lib/wmo";
 import { AnimatedNumber } from "./AnimatedNumber";
@@ -10,9 +10,11 @@ import { WeatherIcon } from "./WeatherIcon";
 export function CurrentHero({
   bundle,
   unit,
+  fix,
 }: {
   bundle: WeatherBundle;
   unit: TempUnit;
+  fix?: { lat: number; lon: number; accuracyM: number } | null;
 }) {
   const { place, current } = bundle;
   const wx = describeWeather(current.code, current.isDay);
@@ -26,6 +28,13 @@ export function CurrentHero({
       <p className="mt-0.5 text-[13px] text-[var(--text-dim)]">
         {region || formatCoords(place.lat, place.lon)}
       </p>
+      {fix && (
+        <p className="mt-1.5 text-[12px] text-[var(--text-faint)]">
+          Your location, accurate to about{" "}
+          <span className="tnum font-mono">{formatAccuracy(fix.accuracyM)}</span>.{" "}
+          <span className="tnum font-mono">{formatCoords(fix.lat, fix.lon, 4)}</span>
+        </p>
+      )}
 
       <div className="mt-5 flex items-start justify-between gap-4">
         <div className="flex items-start">
