@@ -1,0 +1,185 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+}
+
+:root {
+  /* Atmospheric base — blue-cast rather than neutral near-black */
+  --ink-900: #060d16;
+  --ink-800: #0a1626;
+  --ink-700: #122539;
+  --line: rgba(148, 180, 214, 0.15);
+  --line-strong: rgba(148, 180, 214, 0.28);
+  --text: #e9f1f9;
+  --text-dim: #93a9c1;
+  --text-faint: #64798f;
+
+  /* Overwritten per condition by ThemeAura */
+  --wx-1: #1e3a8a;
+  --wx-2: #0b1220;
+  --wx-3: #38bdf8;
+  --wx-accent: #7dd3fc;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--ink-900);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+/* The aura is the one ambient effect: the interface takes its colour from the
+   sky it is describing. */
+.wx-aura {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+  /* Sits above the map and tints it, so the whole view — not just the rail —
+     takes its colour from the conditions being described. */
+  mix-blend-mode: soft-light;
+  opacity: 0.9;
+  background:
+    radial-gradient(58% 52% at 80% 6%, var(--wx-3), transparent 70%),
+    radial-gradient(68% 58% at 10% 94%, var(--wx-1), transparent 72%);
+  transition: background 900ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hairline {
+  border-top: 1px solid var(--line);
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Barograph ruling behind the temperature trace */
+.trace-grid {
+  background-image: linear-gradient(to right, var(--line) 1px, transparent 1px);
+  background-size: 48px 100%;
+}
+
+.scrim-rail {
+  background: linear-gradient(
+    to left,
+    rgba(6, 13, 22, 0.94) 0%,
+    rgba(6, 13, 22, 0.9) 62%,
+    rgba(6, 13, 22, 0.72) 100%
+  );
+}
+
+.scrim-mobile {
+  background: linear-gradient(to top, rgba(6, 13, 22, 0.96) 68%, rgba(6, 13, 22, 0.82) 100%);
+}
+
+.edge-fade {
+  mask-image: linear-gradient(to right, transparent, #000 18px, #000 calc(100% - 18px), transparent);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--wx-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.maplibregl-ctrl-attrib {
+  display: none !important;
+}
+
+.maplibregl-ctrl-group {
+  background: rgba(8, 18, 31, 0.9) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(8px);
+}
+
+.maplibregl-ctrl-group button + button {
+  border-top: 1px solid var(--line) !important;
+}
+
+.maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  filter: invert(1) opacity(0.62);
+}
+
+/* Keep the zoom buttons clear of the reading rail, which overlaps the map. */
+.maplibregl-ctrl-bottom-right {
+  bottom: 59dvh;
+}
+
+@media (min-width: 1024px) {
+  .maplibregl-ctrl-bottom-right {
+    bottom: 0;
+    right: 400px;
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(148, 180, 214, 0.07);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(148, 180, 214, 0.12), transparent);
+  animation: shimmer 1.8s infinite;
+}
+
+@keyframes ping-soft {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+.marker-ping {
+  animation: ping-soft 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .skeleton::after,
+  .marker-ping {
+    animation: none;
+  }
+}
