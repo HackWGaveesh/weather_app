@@ -46,3 +46,15 @@ dev.log
 
 .vercel
 .env*
+
+# android signing key and build output (never commit a keystore)
+android/android.keystore
+android/*.keystore
+android/.gradle/
+android/build/
+android/app/build/
+android/*.apk
+android/*.aab
+android/*.idsig
+android/*.status
+android/*.zip

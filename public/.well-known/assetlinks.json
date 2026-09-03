@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.vercel.weatherapp_self_nine.twa",
+      "sha256_cert_fingerprints": [
+        "94:F3:7C:B2:07:EE:61:C1:6C:20:F3:36:27:C7:BA:ED:E4:9C:02:77:5C:53:60:2E:73:C8:23:A0:C1:93:64:E8"
+      ]
+    }
+  }
+]
