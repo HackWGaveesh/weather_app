@@ -41,6 +41,36 @@ The preset chips are chosen as climate extremes, so there is no need to invent a
 4. Turn on **Rain radar** over somewhere currently wet and press play.
 5. Click a random point in the middle of the Pacific to show it works with no named place at all.
 
+## Android app
+
+**Download:** https://weatherapp-self-nine.vercel.app/weather-observatory.apk
+
+Open that link on an Android phone and install it. Android will warn about
+installing outside the Play Store — allow it for your browser when prompted.
+Requires Android 5.0 or newer.
+
+The APK is a Trusted Web Activity: an app shell around the deployed site, so it
+runs full screen with its own icon and no browser chrome. Since all the weather
+data is live, there is nothing to gain from bundling the site offline. The app
+updates whenever the site does — no reinstall needed.
+
+Location works through Chrome's permission, so if the location button does
+nothing, check that Chrome has location access in Android settings.
+
+### Rebuilding the APK
+
+```bash
+cd android
+bubblewrap build --skipPwaValidation
+```
+
+Needs JDK 17 and the Android SDK, with `~/.bubblewrap/config.json` pointing at
+both. The signing keystore (`android/android.keystore`) is deliberately **not**
+committed — it is a credential. Keep it safe: updates to an installed app must
+be signed with the same key, and `public/.well-known/assetlinks.json` pins its
+SHA-256 fingerprint. Losing it means a new package and a fresh install for
+everyone.
+
 ## Data sources
 
 | Layer | Source |
