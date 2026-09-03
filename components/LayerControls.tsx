@@ -81,7 +81,7 @@ export function LayerControls({
   const currentFrame = radarFrames[frameIndex];
 
   return (
-    <div className="w-[236px] rounded-lg border border-[var(--line)] bg-[rgba(8,18,31,0.9)] px-3 py-1.5 backdrop-blur-md">
+    <div className="w-full rounded-lg border border-[var(--line)] bg-[rgba(8,18,31,0.9)] px-3 py-1.5 backdrop-blur-md lg:w-[236px]">
       <Toggle
         label="Satellite base"
         checked={layers.satellite}

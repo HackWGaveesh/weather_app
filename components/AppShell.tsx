@@ -14,6 +14,7 @@ import type {
   WeatherBundle,
 } from "@/lib/types";
 import { describeWeather } from "@/lib/wmo";
+import { cn } from "@/lib/utils";
 import { useTempUnit } from "@/hooks/useTempUnit";
 import { Dashboard } from "./Dashboard";
 import { GeolocateButton } from "./GeolocateButton";
@@ -62,6 +63,7 @@ export function AppShell({
     null,
   );
   const [playing, setPlaying] = useState(true);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const speedUnit: SpeedUnit = tempUnit === "C" ? "kmh" : "mph";
 
   const key = weatherKey(selection);
@@ -180,8 +182,12 @@ export function AppShell({
       <div className="pointer-events-none absolute inset-0 z-20 flex flex-col lg:flex-row">
         {/* Controls */}
         <div className="pointer-events-none flex flex-1 flex-col justify-between p-3 sm:p-4">
+          {/* min-w-0 lets the search field shrink; without it the row overflows
+              a phone's width and the unit toggle is clipped off-screen. */}
           <div className="pointer-events-auto flex w-full max-w-[560px] items-start gap-2">
-            <SearchField onSelect={pickPlace} />
+            <div className="min-w-0 flex-1">
+              <SearchField onSelect={pickPlace} />
+            </div>
             <GeolocateButton onLocate={locateMe} />
             <UnitToggle unit={tempUnit} onChange={setTempUnit} />
           </div>
@@ -215,31 +221,73 @@ export function AppShell({
           </div>
         </div>
 
-        {/* Reading rail */}
+        {/* Reading rail — a bottom sheet on phones, a side rail on desktop.
+            The header stays out of the scroll container so it is always a
+            reliable, full-width tap target. */}
         <div
-          className="scrim-rail pointer-events-auto max-h-[58dvh] w-full shrink-0 overflow-y-auto border-t border-[var(--line)] px-4 py-5 backdrop-blur-xl lg:max-h-none lg:h-full lg:w-[400px] lg:border-t-0 lg:border-l lg:px-6 lg:py-6"
+          className={cn(
+            "scrim-rail pointer-events-auto flex w-full shrink-0 flex-col border-t border-[var(--line)] backdrop-blur-xl transition-[height] duration-300 ease-out",
+            "lg:h-full lg:w-[400px] lg:border-t-0 lg:border-l",
+            sheetOpen ? "h-[86dvh]" : "h-[54dvh]",
+          )}
         >
-          <Dashboard
-            bundle={data}
-            loading={isValidating}
-            error={errorMessage}
-            onRetry={() => mutate()}
-            tempUnit={tempUnit}
-            speedUnit={speedUnit}
-            fix={fix}
-          />
+          <button
+            type="button"
+            onClick={() => setSheetOpen((v) => !v)}
+            aria-expanded={sheetOpen}
+            className="flex shrink-0 flex-col items-center gap-1.5 px-4 pt-2.5 pb-1.5 lg:hidden"
+          >
+            <span className="h-1 w-10 rounded-full bg-[var(--line-strong)]" />
+            <span className="text-[11px] text-[var(--text-faint)]">
+              {sheetOpen ? "Tap to shrink" : "Tap for full forecast"}
+            </span>
+          </button>
 
-          <div className="mt-6 lg:hidden">
-            <LayerControls
-              layers={layers}
-              onChange={setLayers}
-              radarFrames={radarFrames}
-              frameIndex={frameIndex}
-              onFrameIndex={setScrubIndex}
-              playing={playing}
-              onPlayingChange={setPlaying}
-              imageryDate={defaultImageryDate()}
+          <div className="flex-1 overflow-y-auto px-4 pb-6 lg:px-6 lg:py-6">
+            {/* Map layers sit at the top of the sheet on phones, beside the map
+                they control, rather than below the whole forecast. */}
+            <div className="mb-5 lg:hidden">
+              <LayerControls
+                layers={layers}
+                onChange={setLayers}
+                radarFrames={radarFrames}
+                frameIndex={frameIndex}
+                onFrameIndex={setScrubIndex}
+                playing={playing}
+                onPlayingChange={setPlaying}
+                imageryDate={defaultImageryDate()}
+              />
+            </div>
+
+            <Dashboard
+              bundle={data}
+              loading={isValidating}
+              error={errorMessage}
+              onRetry={() => mutate()}
+              tempUnit={tempUnit}
+              speedUnit={speedUnit}
+              fix={fix}
             />
+
+            <div className="mt-6 lg:hidden">
+              <h2 className="mb-2 text-[13px] text-[var(--text-dim)]">Jump to</h2>
+              <div className="edge-fade -mx-4 flex snap-x gap-1.5 overflow-x-auto px-4 pb-1">
+                {PRESETS.map((preset) => (
+                  <button
+                    key={preset.name}
+                    type="button"
+                    onClick={() => pickPlace(preset)}
+                    className="shrink-0 snap-start rounded-full border border-[var(--line)] px-3 py-1.5 text-[12px] whitespace-nowrap text-[var(--text-dim)]"
+                  >
+                    {preset.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <p className="mt-5 text-[10px] leading-relaxed text-[var(--text-faint)] lg:hidden">
+              {ATTRIBUTION.weather}. {ATTRIBUTION.radar}. {ATTRIBUTION.satellite}.
+            </p>
           </div>
         </div>
       </div>

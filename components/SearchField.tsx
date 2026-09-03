@@ -81,7 +81,7 @@ export function SearchField({
               setOpen(true);
             }}
             onFocus={() => setOpen(true)}
-            placeholder="Search a city, or click the map"
+            placeholder="Search a city"
             aria-label="Search for a place"
             className="h-11 w-full bg-transparent text-[14px] text-[var(--text)] outline-none placeholder:text-[var(--text-faint)]"
           />
