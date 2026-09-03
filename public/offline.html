@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Offline — Weather Observatory</title>
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: #060d16;
+        color: #e9f1f9;
+        font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+        text-align: center;
+      }
+      .card { max-width: 26rem; }
+      h1 { font-size: 1.3rem; font-weight: 500; margin: 0 0 0.5rem; }
+      p { margin: 0 0 1.5rem; color: #93a9c1; line-height: 1.6; font-size: 0.95rem; }
+      button {
+        font: inherit;
+        color: #e9f1f9;
+        background: transparent;
+        border: 1px solid rgba(148, 180, 214, 0.28);
+        border-radius: 8px;
+        padding: 0.6rem 1.1rem;
+      }
+      svg { color: #7dd3fc; margin-bottom: 1.25rem; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round">
+        <path d="M17.5 19a4.5 4.5 0 0 0 .6-8.96 6 6 0 0 0-10.5-2.4" />
+        <path d="M3 3l18 18" />
+        <path d="M6.3 10.1A4.5 4.5 0 0 0 7 19h8" />
+      </svg>
+      <h1>No connection</h1>
+      <p>
+        Weather Observatory reads live data, so it needs a network connection.
+        Reconnect and try again.
+      </p>
+      <button onclick="location.reload()">Retry</button>
+    </div>
+  </body>
+</html>
